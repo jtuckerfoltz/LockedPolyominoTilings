@@ -3,8 +3,13 @@ import random
 from tqdm import tqdm
 import pickle
 import os.path
-import networkx as nx
 from matplotlib import pyplot as plt
+import time
+import os
+from sys import argv
+
+
+next_time = 0
 
 
 def choose_arbitrarily(s):
@@ -24,7 +29,14 @@ def neighbors(cell, triangular=False):
 
 
 def get_all_tetris_pieces(n, root, allowable_locations, all_cells=None, triangular=False):
-    if not (allowable_locations is None) and root not in allowable_locations:
+    if type(n) != int:
+        to_return = set()
+        for nn in n:
+            pieces = get_all_tetris_pieces(nn, root, allowable_locations, all_cells=all_cells, triangular=triangular)
+            for piece in pieces:
+                to_return.add(piece)
+        return to_return
+    elif not (allowable_locations is None) and root not in allowable_locations:
         raise Exception(f"Root {root} not in allowable locations {allowable_locations}")
     elif all_cells is None:
         return get_all_tetris_pieces(n, root, allowable_locations, {root}, triangular=triangular)
@@ -62,11 +74,11 @@ def pf_mult_1(side_length, grid, finalized, box=None):
     best_obj_value = 999999999999
     for row in range(side_length):
         for col in range(box if box else (side_length - row)):
-            if finalized[row][col]:
-                continue
             num_possibilities = len(grid[row][col])
             if num_possibilities == 0:
                 return -2, -2
+            elif finalized[row][col]:
+                continue
             else:
                 obj_value = num_possibilities * (row + col + 5)
                 if obj_value < best_obj_value:
@@ -76,30 +88,34 @@ def pf_mult_1(side_length, grid, finalized, box=None):
     return best_row, best_col
 
 
-def pf_poss_lex_1(side_length, grid, box=None):
-    best_row = -1
-    best_col = -1
-    best_obj_value = 999999999999
-    for row in range(side_length):
-        for col in range(box if box else (side_length - row)):
-            num_possibilities = len(grid[row][col])
-            if num_possibilities == 0:
-                return -2, -2
-            elif num_possibilities == 1:
-                pass
-            else:
-                obj_value = num_possibilities
-                if obj_value < best_obj_value:
-                    best_row = row
-                    best_col = col
-                    best_obj_value = obj_value
-    return best_row, best_col
-
-
 def explore(n, types, side_length, priority_function, disallowable_pairs, grid, finalized,
-            box=None, scout=0, rot_sym=None, stop_when_found=False):
+            box=None, scout=0, rot_sym=None, stop_when_found=False, first_tile=None):
+    this_time = time.time()
+    global next_time
+    if this_time > next_time:
+        next_time = this_time + 60
+        # Uncomment next line to print current status of search every minute.
+        #print_nicely(n, grid)
     row_root, col_root = priority_function(side_length, grid, finalized, box)
     if row_root == -1:  # Exactly one choice for each cell, i.e., complete tiling.
+        if type(n) == int:
+            global test_num
+            filename = f"Outputs/T{test_num}.txt"
+            if os.path.exists(filename):
+                with open(filename, "a") as f:
+                    f.write(str(grid) + "\n")
+            return 1, grid
+        else:
+            sizes = set()
+            for row in grid:
+                for cell in row:
+                    t = choose_arbitrarily(cell)
+                    if t != -1:
+                        sizes.add(len(types[t]))
+            if len(sizes) == len(n):
+                return 1, grid
+            else:
+                return 0, None
         return 1, grid
     elif row_root == -2:  # No valid tilings.
         return 0, None
@@ -107,6 +123,8 @@ def explore(n, types, side_length, priority_function, disallowable_pairs, grid, 
         possible_types = grid[row_root][col_root]
         tilings = []
         total_num_tilings = 0
+        if first_tile:
+            possible_types = [first_tile]
         for t in possible_types:
             new_grid, new_finalized = place(disallowable_pairs, side_length, box, grid,
                              row_root, col_root, t, types, finalized)
@@ -132,6 +150,11 @@ def explore(n, types, side_length, priority_function, disallowable_pairs, grid, 
                                                  disallowable_pairs, new_grid, new_finalized,
                                                  box=box, scout=scout, rot_sym=rot_sym,
                                                  stop_when_found=stop_when_found)
+            if num_tilings == "STOP":
+                print(side_length, grid, finalized, box)
+                print_nicely(n, grid)
+                print(priority_function(side_length, grid, finalized, box))
+                raise Exception("STOPPING")
             if num_tilings > 0:
                 total_num_tilings += num_tilings
                 tilings.append(sample_tiling)
@@ -162,9 +185,14 @@ def place(disallowable_pairs, side_length, box, grid, row_root, col_root, t, typ
     return new_grid, new_finalized
 
 
-def tile_grid(n, side_length, priority_function, disallowable_pairs=None, box=None, scout=0,
-              triangle_box=False, rot_sym=None, stop_when_found=False):
-    if box and ((side_length * box) % n != 0):
+def tile_grid(n, side_length, priority_function=pf_mult_1, disallowable_pairs=None, box=None,
+              scout=0, triangle_box=False, rot_sym=None, stop_when_found=False,
+              missing_cells=set(), first_tile=None, output_tilings=False):
+    if output_tilings:
+        if not os.path.exists("Outputs"):
+            os.makedirs("Outputs")
+        open(f"Outputs/T{test_num}.txt", "w").close()
+    if type(n) == int and box and ((side_length * box - len(missing_cells)) % n != 0):
         return 0, None
     types = generate_types(n)
     if disallowable_pairs is None:
@@ -173,8 +201,13 @@ def tile_grid(n, side_length, priority_function, disallowable_pairs=None, box=No
             for row in range(side_length)]
     finalized = [[False for _ in range(box if box else (side_length - row))] \
             for row in range(side_length)]
+    for i, j in missing_cells:
+        grid[i][j].add(-1)
+        finalized[i][j] = True
     for row_root in range(side_length):
         for col_root in range(box if box else (side_length - row_root)):
+            if (row_root, col_root) in missing_cells:
+                continue
             for t in range(len(types)):
                 ok = True
                 for d_row, d_col in types[t]:
@@ -188,23 +221,33 @@ def tile_grid(n, side_length, priority_function, disallowable_pairs=None, box=No
                                      or (triangle_box and col_other >= side_length):
                         ok = False
                         break
+                    if (row_other, col_other) in missing_cells:
+                        ok = False
+                        break
                 if ok:
                     grid[row_root][col_root].add(t)
     if rot_sym:
         rot_sym = rotation_map(n), rot_sym
     return explore(n, types, side_length, priority_function, disallowable_pairs,
                    grid, finalized, box=box, rot_sym=rot_sym,
-                   stop_when_found=stop_when_found)
+                   stop_when_found=stop_when_found, first_tile=first_tile)
+    
 
 
 def generate_disallowable_pairs(n, triangular=False, refine=True):
-    filename = f"disallowable_pairs_{'T_' if triangular else ''}{n}.p"
+    if type(n) == tuple:
+        s = "-".join(map(str, n))
+        filename = f"disallowable_pairs_{'T_' if triangular else ''}{s}.p"
+        max_n = max(n)
+    else:
+        filename = f"disallowable_pairs_{'T_' if triangular else ''}{n}.p"
+        max_n = n
     if os.path.isfile(filename):
         with open(filename, 'rb') as f:
             return(pickle.load(f))
     types = generate_types(n)
     num_types = len(types)
-    board_radius = 3*n if refine else 2*n - 2
+    board_radius = 3*max_n if refine else 2*max_n - 2
     disallowable_pairs = {}
     root = (0, 0)
     for x in tqdm(range(-board_radius, board_radius + 1)):
@@ -222,8 +265,12 @@ def generate_disallowable_pairs(n, triangular=False, refine=True):
             for t_root in range(num_types):
                 disallowable_types = set()
                 for t_other in range(num_types):
-                    allowable_locations = set(types[t_root]
-                                        + tuple((x + xx, y + yy) for xx, yy in types[t_other]))
+                    s1 = set(types[t_root])
+                    s2 = set((x + xx, y + yy) for xx, yy in types[t_other])
+                    allowable_locations = s1.union(s2)
+                    if s1 != s2 and len(allowable_locations) != len(s1) + len(s2):
+                        disallowable_types.add(t_other)
+                        continue
                     pieces = get_all_tetris_pieces(n, other, allowable_locations,
                                                    triangular=triangular)
                     found_unique_decomposition = False
@@ -237,16 +284,13 @@ def generate_disallowable_pairs(n, triangular=False, refine=True):
                             remaining_pieces = get_all_tetris_pieces(n, new_root,
                                                remaining_allowable_locations,
                                                triangular=triangular)
-                            if len(remaining_pieces) == 0:
-                                pass
-                            elif len(remaining_pieces) == 1:
+                            if len(remaining_allowable_locations) in \
+                                    [len(piece) for piece in remaining_pieces]:
                                 if found_unique_decomposition:
                                     found_unique_decomposition = False
                                     break
                                 else:
                                     found_unique_decomposition = True
-                            else:
-                                raise Exception(f"Remaining pieces: {remaining_pieces}")
                     if not found_unique_decomposition:
                         disallowable_types.add(t_other)
                 disallowable_pairs_for_other[t_root] = disallowable_types
@@ -294,7 +338,7 @@ def print_nicely(n, tiling, plot=False, recolor=False, just_return=False):
         return
     side_length = len(tiling)
     box = len(tiling[0])
-    if box != len(tiling[1]):
+    if side_length == 1 or box != len(tiling[1]):
         box = False
     types = generate_types(n)
     last_id = 0
@@ -307,12 +351,17 @@ def print_nicely(n, tiling, plot=False, recolor=False, just_return=False):
         for col_root in range(box if box else (side_length - row_root)):
             possible_types = tiling[row_root][col_root]
             if len(possible_types) == 1:
+                the_type = choose_arbitrarily(possible_types)
+                if the_type == -1:
+                    continue
                 current_id = printable_grid[row_root][col_root]
                 if current_id == 0:
                     last_id += 1
                     if last_id == 27 and not recolor:
+                        last_id = 33
+                    elif last_id == 59 and not recolor:
                         last_id = 1
-                    for d_row, d_col in types[choose_arbitrarily(possible_types)]:
+                    for d_row, d_col in types[the_type]:
                         row_other = row_root + d_row
                         col_other = col_root + d_col
                         if row_other >= 0 and col_other >= 0 and \
@@ -336,6 +385,7 @@ def print_nicely(n, tiling, plot=False, recolor=False, just_return=False):
         print("\n".join(["".join(map(lambda x: chr(64 + x) if x > 0 else " ",
                      printable_grid[row])) for row in range(side_length if box else \
                                                             (side_length + n - 1))]))
+        print("")
 
 
 def rotation_map(n):
@@ -352,71 +402,137 @@ def rotation_map(n):
     return r
 
 
-test_num = 1
-print(f"Running test {test_num}...\n")
+def get_oeis_str(n, tiling):
+    grid = print_nicely(n, tiling, just_return=True)
+    num_rows = len(grid)
+    num_columns = len(grid[0])
+    s = "." + ("_" * (2*num_columns - 1)) + "."
+    row_template = ["|"] + ["_" for _ in range(2*num_columns - 1)] + ["|"]
+    for i in range(num_rows):
+        row = row_template.copy()
+        for j in range(num_columns):
+            if i < num_rows - 1 and grid[i][j] == grid[i + 1][j]:
+                row[2*j + 1] = " "
+        for j in range(num_columns - 1):
+            c = "|"
+            if grid[i][j] == grid[i][j + 1]:
+                v1 = 1 if row[2*j + 1] == "_" else 0
+                v2 = 1 if row[2*j + 3] == "_" else 0
+                v3 = v1 + v2
+                if v3 == 0:
+                    c = " "
+                elif v3 == 1:
+                    c = "."
+                elif v3 == 2:
+                    c = "_"
+                else:
+                    raise Exception("This can't happen.")
+            row[2*j + 2] = c
+        s += "\n" + "".join(row)
+    return s
 
 
-if test_num == 1:  # Search for locked 4-omino tilings.
+test_num = 0
+if len(argv) > 1:
+    test_num = int(argv[1])
+    print(f"Running test {test_num}...\n")
+else:
+    print("Usage: 'python3 locked_polyomino_tilings test_num'")
+
+
+if test_num == 1:  # Simplest grid where locked polyomino tilings exist: 6 X 4 into 3-ominoes
+    n = 3
+    num_tilings, sample_tiling = tile_grid(n, side_length=6, box=4)
+    print(f"Num tilings: {num_tilings}\n")
+    print_nicely(n, sample_tiling)
+elif test_num == 2:  # Finds the only known locked 4-omino tiling, which is on a 10 X 10 grid
     n = 4
-    for graph_size in range(n, 401, n):
-        print(f"**Graph size: {graph_size}**\n")
-        for side_length in range(2, graph_size):
-            box_frac = graph_size/side_length
-            box = int(box_frac)
-            if box_frac == box and box <= side_length and box > 1:
-                num_tilings, sample_tiling = tile_grid(n, side_length, pf_mult_1, box=box)
-                print(f"Grid dimensions: {side_length} X {box}")
-                print(f"Num tilings: {num_tilings}\n")
-                if not sample_tiling is None:
-                    print_nicely(n, sample_tiling)
-elif test_num == 2:  # Search for symmetric locked 4-omino tilings.
+    num_tilings, sample_tiling = tile_grid(n, side_length=10, box=10)
+    print(f"Num tilings: {num_tilings}\n")
+    print_nicely(n, sample_tiling)
+elif test_num == 3:  # Search for ways to complete top-left corner of grid with locked 4-ominoes
     n = 4
-    disallowable_pairs = generate_disallowable_pairs(n)
-    for side_length in range(2, 31):
-        for box in [side_length]:
-            num_tilings, sample_tiling = tile_grid(n, side_length, pf_mult_1, \
-                                                   disallowable_pairs, box=box, rot_sym=4)
-            print(f"Grid dimensions: {side_length} X {box}")
-            print(f"Num tilings: {num_tilings}\n")
-            if not sample_tiling is None:
-                print_nicely(n, sample_tiling)
-elif test_num == 3:  # Search for ways to complete top-left corner of grid with locked 4-ominoes.
-    n = 4
-    disallowable_pairs = generate_disallowable_pairs(n)
-    for side_length in range(2, 20):
-        num_tilings, sample_tiling = tile_grid(n, side_length, pf_mult_1, disallowable_pairs)
+    for side_length in range(2, 16):
+        num_tilings, sample_tiling = tile_grid(n, side_length)
         print(f"Side length: {side_length}")
         print(f"Num tilings: {num_tilings}\n")
         print_nicely(n, sample_tiling)
         print("\n\n")
-elif test_num == 4:  # Search for locked 5-omino tilings.
+elif test_num == 4:  # Finds the smallest known locked-5-omino tiling, which is on a 20 X 20 grid
     n = 5
+    # Setting rot_sym=4 only searches for 4-fold symmetric tilings. Saves a ton of time.
+    num_tilings, sample_tiling = tile_grid(n, side_length=20, box=20, rot_sym=4)
+    print(f"Num tilings: {num_tilings}\n")
+    print_nicely(n, sample_tiling)
+elif test_num == 5:  # Prove that top-left corner tile must be 269 (P), 274 (L), or 279 (Z)
+    n = 5
+    # We compute this once and pass in so it doesn't have load from disk each time
     disallowable_pairs = generate_disallowable_pairs(n)
-    for side_length in range(2, 20):
-        for box in range(1, side_length + 1):
-            num_tilings, sample_tiling = tile_grid(n, side_length, pf_mult_1,
-                                                   disallowable_pairs, box=box)
-            print(f"Grid dimensions: {side_length} X {box}")
+    for side_length in range(1, 6):  # Only get the contradiction starting at side_length = 5
+        print(f"\n**************** SIDE_LENGTH: {side_length} ****************\n")
+        for tile in [256, 258, 259, 260, 261, 262, 263, 264, 269, 270, 271, 273, 274, 275, 276, \
+                     277, 278, 279, 280, 281, 296, 297, 298, 299, 301, 302, 303, 304, 309, 310, \
+                     311, 313, 314, 252, 253, 254, 255]:
+            if tile in [269, 271, 274, 253, 279, 299]:  # 271, 253, and 299 are flips, redundant.
+                continue
+            num_tilings, sample_tiling = tile_grid(n, side_length, first_tile=tile,
+                                                   disallowable_pairs=disallowable_pairs)
             print(f"Num tilings: {num_tilings}\n")
-            if not sample_tiling is None:
-                print_nicely(n, sample_tiling)
-elif test_num == 5:  # Search for symmetric locked 5-omino tilings.
+            print_nicely(n, sample_tiling)
+elif test_num == 6:  # These next three tests find all symmetric 30 X 30 locked 5-omino tilings
     n = 5
-    disallowable_pairs = generate_disallowable_pairs(n)
-    for side_length in range(2, 26):
-        for box in range(side_length, side_length + 1):
-            num_tilings, sample_tiling = tile_grid(n, side_length, pf_mult_1, disallowable_pairs, box=box, rot_sym=4)
-            print(f"Grid dimensions: {side_length} X {box}")
-            print(f"Num tilings: {num_tilings}\n")
-            if not sample_tiling is None:
-                print_nicely(n, sample_tiling)
-elif test_num == 6:  # Search for ways to complete top-left corner of grid with locked 5-ominoes.
+    num_tilings, sample_tiling = tile_grid(n, side_length=30, box=30,\
+            rot_sym=4, first_tile=269, output_tilings=True)
+    print(f"Num tilings: {num_tilings}\n")
+    print_nicely(n, sample_tiling)
+elif test_num == 7:  # From test 5, we know we only have to check first tiles 269, 274, and 279
     n = 5
-    disallowable_pairs = generate_disallowable_pairs(n)
-    for side_length in range(2, 15):
-        num_tilings, sample_tiling = tile_grid(n, side_length, pf_mult_1, disallowable_pairs)
-        print(f"Side length: {side_length}")
-        print(f"Num tilings: {num_tilings}\n")
-        print_nicely(n, sample_tiling)
-        print("\n\n")
+    num_tilings, sample_tiling = tile_grid(n, side_length=30, box=30,\
+            rot_sym=4, first_tile=274, output_tilings=True)
+    print(f"Num tilings: {num_tilings}\n")
+    print_nicely(n, sample_tiling)
+elif test_num == 8:  # Tilings from these three tests are written to the Outputs directory
+    n = 5
+    num_tilings, sample_tiling = tile_grid(n, side_length=30, box=30,\
+            rot_sym=4, first_tile=279, output_tilings=True)
+    print(f"Num tilings: {num_tilings}\n")
+    print_nicely(n, sample_tiling)
+elif test_num == 9:  # Output tilings from tests 6, 7, and 8 in format of AllSymmetricTilings.txt
+    n = 5
+    lines = []
+    counters = {}
+    for filenumber in [6, 7, 8]:
+        with open(f"Outputs/T{filenumber}.txt", "r") as f:
+            for line in f:
+                if "{" in line:
+                    tiling = eval(line)
+                    first_char = {279: "Z", 274: "L", 269: "P"}[choose_arbitrarily(tiling[0][0])]
+                    name = f"S{len(tiling)}-{first_char}"
+                    if name in counters:
+                        counters[name] += 1
+                    else:
+                        counters[name] = 1
+                    print(f"{name}{counters[name]:02}\n")
+                    print(tiling)
+                    print("")
+                    print_nicely(n, tiling)
+                    print("\n")
+elif test_num == 10:  # Output tilings from tests 6, 7, and 8 in OEIS format
+    n = 5
+    lines = []
+    counters = {}
+    for filenumber in [6, 7, 8]:
+        with open(f"Outputs/T{filenumber}.txt", "r") as f:
+            for line in f:
+                if "{" in line:
+                    tiling = eval(line)
+                    first_char = {279: "Z", 274: "L", 269: "P"}[choose_arbitrarily(tiling[0][0])]
+                    name = f"S{len(tiling)}-{first_char}"
+                    if name in counters:
+                        counters[name] += 1
+                    else:
+                        counters[name] = 1
+                    print(f"{name}{counters[name]:02}\n")
+                    print(get_oeis_str(n, tiling))
+                    print("\n")
 

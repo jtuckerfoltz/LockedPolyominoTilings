@@ -1,0 +1,81 @@
+Red
+#CC0000
+
+XX
+ X
+ XX
+
+
+Dark Blue
+#000066
+
+XXXX
+X
+
+
+Pink
+#FF66FF
+
+XX
+XX
+X
+
+
+Dark Grey
+#4D4D4D
+
+XXXXX
+
+
+Brown
+#663300
+
+XXX
+ X
+ X
+
+
+Green
+#006600
+
+X X
+XXX
+
+
+Yellow
+#EEEE00
+
+ X
+XXX
+ X
+
+
+Orange
+#FF9933
+
+XXXX
+ X
+
+
+Light Green
+#66DD99
+
+ XX
+XX
+ X
+
+
+Blue
+#3399FF
+
+
+XXX
+  XX
+
+Purple
+#7F00FF
+
+XX
+ XX
+  X
+
