@@ -28,7 +28,7 @@ These can be run in parallel, and may each take several hours to finish. Importa
 
 ``python3 locked_polyomino_tilings.py 9``
 
-and cut/paste from the terminal (or redirect output) into a new file ``5OminoTilings.txt``. Make sure to include a line return at the very end of the file. The file ``All5OminoTilings.txt`` was created in this exact same way, except that it also included outputs from runs on the 20 X 20 and 35 X 35 grids (the latter of which took more than a week to run). Finally, to create the SVGs and store them in the ``Images`` directory, run:
+and cut/paste from the terminal (or redirect output) into a new file, like ``5OminoTilings.txt``. Make sure to include a line return at the very end of the file. The file ``All5OminoTilings.txt`` was created in this exact same way, except that it also included outputs from runs on the 20 X 20 and 35 X 35 grids (the latter of which took more than a week to run). Let's assume we're working with that file now, which you can download directly from this repository. To create the SVGs and store them in the ``Images`` directory, run:
 
 ``python3 print_to_svg.py All5OminoTilings.txt ColorCode5Ominoes.txt Images``
 
