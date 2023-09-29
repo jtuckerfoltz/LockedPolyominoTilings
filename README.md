@@ -2,7 +2,7 @@
 
 <img src="https://github.com/jtuckerfoltz/LockedPolyominoTilings/blob/main/Images/S30-P05.svg" width=75% height=75%>
 
-Searches for locked polyomino tilings, as described in Section 4 of this paper:
+Enumerates locked polyomino tilings, as described in Section 4 of this paper:
 
 https://arxiv.org/abs/2307.15996
 
