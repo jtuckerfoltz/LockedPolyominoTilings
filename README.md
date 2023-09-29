@@ -6,9 +6,9 @@ Searches for locked polyomino tilings, as described in Section 4 of this paper:
 
 https://arxiv.org/abs/2307.15996
 
-Also see the relevant OEIS sequence:
+Also see the OEIS sequence for symmetric pentomino tilings:
 
-TODO (under submission)
+https://oeis.org/A365862
 
 SVG images of all known 4-fold symmetric, locked 5-omino tilings are in the ``Images`` directory. The tiling shown above (``S30-P05``) is my favorite, one of only ten such tilings of the 30 X 30 grid.
 
