@@ -1,6 +1,6 @@
 # Locked Polyomino Tilings
 
-
+<img src="https://github.com/jtuckerfoltz/LockedPolyominoTilings/blob/main/Images/S30-P05.svg" width=50% height=50%>
 
 Searches for locked polyomino tilings, as described in Section 4 of this paper:
 
@@ -10,7 +10,7 @@ Also see the relevant OEIS sequence:
 
 TODO (under submission)
 
-SVG images of all known 4-fold symmetric, locked 5-omino tilings are in the ``Images`` directory.
+SVG images of all known 4-fold symmetric, locked 5-omino tilings are in the ``Images`` directory. The tiling shown above (``S30-P05``) is my favorite, one of only ten such tilings of the 30 X 30 grid.
 
 ## Running the code.
 
