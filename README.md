@@ -10,7 +10,7 @@ Also see the OEIS sequence for symmetric pentomino tilings:
 
 https://oeis.org/A365862
 
-SVG images of all known 4-fold symmetric, locked 5-omino tilings are in the [Images](https://github.com/jtuckerfoltz/LockedPolyominoTilings/tree/main/Images) directory. The tiling shown above ([S30-P05](https://github.com/jtuckerfoltz/LockedPolyominoTilings/blob/main/Images/S30-P05.svg)) is my favorite, one of only ten such tilings of the 30 X 30 grid.
+SVG images of all known 4-fold symmetric, locked 5-omino tilings are in the [Images](https://github.com/jtuckerfoltz/LockedPolyominoTilings/tree/main/Images) directory. The tiling shown above ([S30-P05.svg](https://github.com/jtuckerfoltz/LockedPolyominoTilings/blob/main/Images/S30-P05.svg)) is my favorite, one of only ten such tilings of the 30 X 30 grid.
 
 ## Running the code
 
