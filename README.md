@@ -1,6 +1,6 @@
 # Locked Polyomino Tilings
 
-<img src="https://github.com/jtuckerfoltz/LockedPolyominoTilings/blob/main/Images/S30-P05.svg" width=50% height=50%>
+<img src="https://github.com/jtuckerfoltz/LockedPolyominoTilings/blob/main/Images/S30-P05.svg" width=75% height=75%>
 
 Searches for locked polyomino tilings, as described in Section 4 of this paper:
 
