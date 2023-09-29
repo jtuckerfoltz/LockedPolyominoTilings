@@ -2,7 +2,6 @@ from sys import argv
 import os
 
 
-# Example usage: 'python3 print_to_svg.py 5OminoTilinings'
 USAGE = "Usage: 'python3 print_to_svg.py tiling_file color_file output_directory'"
 
 def preamble(num_rows, num_columns):
