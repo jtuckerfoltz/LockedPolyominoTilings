@@ -16,7 +16,7 @@ SVG images of all 4-fold symmetric, locked 5-omino tilings of grids up to size 3
 
 The code for enumerating locked polyomino tilings is contained in [locked_polyomino_tilings.py](https://github.com/jtuckerfoltz/LockedPolyominoTilings/tree/main/locked_polyomino_tilings.py). The code is only very lightly documented, containing examples of how to use the core functions at the bottom of the file in 10 numbered code blocks. Not all functionality has corresponding tests that use it; for example, there is an old plotting function that uses matplotlib to visualize tilings, which has now been replaced by a far-superior SVG visualization tool. Such relics are left in the code and mostly still work, but are not essential.
 
-It is instructive to go through an example of how to generate all of the 30 X 30 tilings in the file [All5OminoTilings.txt](https://github.com/jtuckerfoltz/LockedPolyominoTilings/tree/main/All5OminoTilings.txt) and then use this file to produce all of the images in the [Images](https://github.com/jtuckerfoltz/LockedPolyominoTilings/tree/main/Images) directory. You should follow along by reading the comments in the Python files. First, run:
+It is instructive to go through an example of how to generate all of the 30 X 30 tilings in the file [All5OminoTilings.txt](https://github.com/jtuckerfoltz/LockedPolyominoTilings/tree/main/All5OminoTilings.txt) and then use this file to produce all of the 5-omino tilings in the [Images](https://github.com/jtuckerfoltz/LockedPolyominoTilings/tree/main/Images) directory. You should follow along by reading the comments in the Python files. First, run:
 
 ``python3 locked_polyomino_tilings.py 6``
 
