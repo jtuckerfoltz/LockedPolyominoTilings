@@ -1,4 +1,4 @@
-Note: The entire Lean directory, including the directions below, are AI-generated.
+Notes: The entire Lean directory, including the directions below, are AI-generated. You will need to unzip the large LockedHeptomino.zip directory after downloading.
 
 # Heptomino rectangle proof
 
