@@ -2,7 +2,7 @@
 
 <img src="https://github.com/jtuckerfoltz/LockedPolyominoTilings/blob/main/Images/S30-P05.svg" width=75% height=75%>
 
-Enumerates locked polyomino tilings, as described in Section 4 of this paper:
+This repository contains Python code for enumerating locked polyomino tilings, as described in Section 4 of this paper:
 
 https://arxiv.org/abs/2307.15996
 
@@ -12,7 +12,7 @@ https://oeis.org/A365862
 
 SVG images of all 4-fold symmetric, locked 5-omino tilings of grids up to size 35 X 35 are in the [Images](https://github.com/jtuckerfoltz/LockedPolyominoTilings/tree/main/Images) directory. The tiling shown above ([S30-P05.svg](https://github.com/jtuckerfoltz/LockedPolyominoTilings/blob/main/Images/S30-P05.svg)) is my favorite, one of only ten such tilings of the 30 X 30 grid.
 
-## Running the code
+## Running the enumeration code
 
 The code for enumerating locked polyomino tilings is contained in [locked_polyomino_tilings.py](https://github.com/jtuckerfoltz/LockedPolyominoTilings/tree/main/locked_polyomino_tilings.py). The code is only very lightly documented, containing examples of how to use the core functions at the bottom of the file in 10 numbered code blocks. Not all functionality has corresponding tests that use it; for example, there is an old plotting function that uses matplotlib to visualize tilings, which has now been replaced by a far-superior SVG visualization tool. Such relics are left in the code and mostly still work, but are not essential.
 
@@ -33,3 +33,11 @@ and cut/paste from the terminal (or redirect output) into a new file, like ``5Om
 ``python3 print_to_svg.py All5OminoTilings.txt ColorCode5Ominoes.txt Images``
 
 This uses the coloring defined in [ColorCode5Ominoes.txt](https://github.com/jtuckerfoltz/LockedPolyominoTilings/tree/main/ColorCode5Ominoes.txt), which you can edit first if you want to change the color scheme.
+
+## Lean proof
+
+In the Lean directory, there is also an AI-generated Lean proof that locked 7-omino tilings do not exist. The short file [Main.lean](https://github.com/jtuckerfoltz/LockedPolyominoTilings/tree/main/Lean/Main.lean) contains all of the definitions necessary for a human to verify the theorem has been correctly formalized. For comparison, the file also contains a theorem that locked 3-omino tilings DO exist (on a 6x6 grid). The program is very memory-intensive, so I recommend you run on only one core:
+```sh
+LEAN_NUM_THREADS=1 lake build Main Tests
+```
+See the README in the Lean directory for more information.
